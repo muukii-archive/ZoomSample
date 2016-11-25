@@ -40,22 +40,22 @@ class ViewController: UIViewController {
       .debug()
       .shareReplay(1)
 
-    let transform = Observable.zip(
-      progress.transition(
-        start: Observable<CGFloat>.just(1),
-        end: Observable<CGFloat>.just(view.bounds.width / card.bounds.width)
-      ),
-      progress.transition(
-        start: Observable<CGFloat>.just(1),
-        end: Observable<CGFloat>.just(view.bounds.height / card.bounds.height)
-      ),
-      progress
-        .transition(start: Observable<CGFloat>.just(0), end: Observable<CGFloat>.just(distance/2))
-    ) { $0 }
+    let animation = CABasicAnimation(keyPath: "transform")
+    animation.fromValue = CATransform3DIdentity
+    animation.toValue = CATransform3DMakeAffineTransform(
+      CGAffineTransform(
+        scaleX: view.bounds.width / card.bounds.width,
+        y: view.bounds.height / card.bounds.height
+        )
+        .concatenating(CGAffineTransform(translationX: 0, y: distance/2)))
+    animation.duration = 1
 
-    transform.bindNext { [unowned self] x, y, ty in
+    card.layer.speed = 0
+    card.layer.add(animation, forKey: "transitionAnimation")
 
-      self.card.layer.setAffineTransform(CGAffineTransform(scaleX: x, y: y).concatenating(CGAffineTransform(translationX: 0, y: ty)))
+    progress.bindNext { [unowned self] progress in
+
+      self.card.layer.timeOffset = progress.native
       }
       .addDisposableTo(disposeBag)
   }
