@@ -14,6 +14,9 @@ import RxOrigami
 
 class ViewController: UIViewController {
 
+  @IBOutlet weak var card: UIView!
+  private let disposeBag = DisposeBag()
+
   override func viewDidLoad() {
     super.viewDidLoad()
     // Do any additional setup after loading the view, typically from a nib.
@@ -29,41 +32,33 @@ class ViewController: UIViewController {
       }
     .debug()
 
+    let distance: CGFloat = -100
+
     let progress = drag
-      .progress(start: Observable<CGFloat>.just(0), end: Observable<CGFloat>.just(-100))
+      .progress(start: Observable<CGFloat>.just(0), end: Observable<CGFloat>.just(distance))
       .clip(min: .just(0), max: .just(1))
       .debug()
       .shareReplay(1)
 
-    let finalWidthRetio = view.bounds.width / card.bounds.width
-    let finalHeightRetio = view.bounds.height / card.bounds.height
-    print(finalWidthRetio, finalHeightRetio)
-
-    card.layer.setAffineTransform(CGAffineTransform(scaleX: finalWidthRetio, y: finalHeightRetio))
-    let rect = card.layer.frame
-    card.layer.transform = CATransform3DIdentity
-
-    print(rect)
-
     let transform = Observable.zip(
       progress.transition(
         start: Observable<CGFloat>.just(1),
-        end: Observable<CGFloat>.just(finalWidthRetio)
+        end: Observable<CGFloat>.just(view.bounds.width / card.bounds.width)
       ),
       progress.transition(
         start: Observable<CGFloat>.just(1),
-        end: Observable<CGFloat>.just(finalHeightRetio)
+        end: Observable<CGFloat>.just(view.bounds.height / card.bounds.height)
       ),
       progress
-        .transition(start: Observable<CGFloat>.just(0), end: Observable<CGFloat>.just(-rect.minY))
+        .transition(start: Observable<CGFloat>.just(0), end: Observable<CGFloat>.just(distance/2))
     ) { $0 }
 
-    transform.bindNext { x, y, ty in
+    transform.bindNext { [unowned self] x, y, ty in
 
       self.card.layer.setAffineTransform(CGAffineTransform(scaleX: x, y: y).concatenating(CGAffineTransform(translationX: 0, y: ty)))
-    }
+      }
+      .addDisposableTo(disposeBag)
   }
 
-  @IBOutlet weak var card: UIView!
 }
 
