@@ -1,0 +1,10 @@
+framework module RxOrigami {
+  umbrella header "RxOrigami.h"
+
+  export *
+  module * { export * }
+}
+
+module RxOrigami.Swift {
+    header "RxOrigami-Swift.h"
+}
